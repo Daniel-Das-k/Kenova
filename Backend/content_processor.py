@@ -11,7 +11,7 @@ import time
 load_dotenv()
 
 class ContentProcessor:
-    def __init__(self, api_key=os.getenv("GOOGLE_API_KEY"), model_name="gemini-1.5-flash", cursor=None, conn=None):
+    def __init__(self, api_key=os.getenv("GOOGLE_API_KEY"), model_name="gemini-2.0-flash-exp", cursor=None, conn=None):
         self.file_handler = FileHandler()
         self.youtube_handler = YouTubeHandler()
         self.uploader = Uploader(api_key)
@@ -29,6 +29,7 @@ class ContentProcessor:
                 return None
 
         file_type = self.file_handler.determine_file_type(file_path)
+        print(file_type)
         if not file_type:
             print("Error: Unsupported file type.")
             return None
@@ -44,7 +45,7 @@ class ContentProcessor:
     def fetch_history(self, file_path, file_type):
         if self.cursor is None:
             return []
-        
+
         self.cursor.execute(
             "SELECT prompt, response FROM responses WHERE file_path = %s ORDER BY id DESC LIMIT 5",
             (file_path,)
@@ -73,15 +74,12 @@ class ContentProcessor:
     def summarize_content(self, input_history):
         prompt_template_summarize=f'''
             You are an assistant tasked with summarizing chat conversations while retaining specific details and context. I will provide you with a list of conversations between two roles: User(Human) and AI. Each entry contains a prompt from User and respective response from AI. Your task is to:
-
                 - Summarize all the content spoken by the User into a single entry under the role "User," ensuring that all specific details and topics mentioned are accurately represented without generalization and summarized it within two to three lines.
                 - Summarize all the content spoken by the AI into a single entry under the role "AI," ensuring the key responses are preserved with specific references to the User's input and summarized it within two to three lines.
                 - Return **only** the summarized content in the form of a Python list of dictionaries, where:
                 - Each dictionary contains two keys: "role" (User or AI) and "content" (summarized content for the respective role).
                 - Do **not** include any extra text, such as "Output List," "json," or any additional prefixes, explanations, or formatting.
-
             The output must strictly start with a `[` and end with a `]`.
-
             Input List:
             {input_history}
             '''
@@ -111,20 +109,20 @@ class ContentProcessor:
         print(f"fetch history processing time: {time.time() - fetch_history_time:.4f} seconds")
         prompt_history = []
         if len(history)>3:
-            
+
             self.load_old_history(history)
             summary=self.summarize_content(history)
             prompt_history.append(summary)
-            
+
             for i in history[:2]:
-
+                print(i)
                 prompt_history.append({"User":i[0],"AI":i[1]})
+            print(prompt_history)
 
-            
         else:
             for i in history:
                 prompt_history.append({"User":i[0],"AI":i[1]})
-
+                print(prompt_history)
 
         prompt_template = self.get_prompt_template(file_type, prompt, prompt_history)
 
@@ -142,60 +140,45 @@ class ContentProcessor:
         if file_type == "video":
             return f"""
             I will provide a video file along with a question related to it. The video will primarily be in any  Indian language and is intended for educational and study purposes.
-
                 Your task is to act as a knowledgeable and supportive teacher. When answering the question:
-
                 - Analyze the visual content, such as images, scenes, objects, or any text visible in the video.
                 - Analyze the audio content, such as speech, narration, or sounds in the video.
                 Provide a detailed, accurate, and contextually relevant response within three lines. Make your explanation:
-
                 - Clear and easy to understand for students.
                 - Encouraging and insightful, offering additional context or knowledge where helpful.
                 - Engaging, using examples from the video content to enhance learning.
-
                 Additionally, consider the following conversation history between the User and the AI:
                 {prompt_history}
-
                 Now answer the following question considering the above context:
                 Question: {prompt}
             """
         elif file_type == "image":
             return f"""
             I will provide an image along with a question related to it. The image may include visual elements such as objects, text, scenes, or symbols, and it is intended for educational and study purposes.
-
                 Your task is to act as a knowledgeable and supportive teacher. When answering the question:
-
                 - Analyze the image thoroughly, considering all visible details such as objects, colors, text, actions, or context.
                 - Provide an answer that is:
                 - Clear and simple for students to grasp.
                 - Encouraging and explanatory, adding relevant details or insights when appropriate.
                 - Engaging, using observations from the image to make the response meaningful for learning.
                 - Your response should be within three lines in short and should convey the answer.
-
                 Additionally, consider the following conversation history between the User and the AI:
     {prompt_history}
-
     Now answer the following question considering the above context:
     Question: {prompt}
             """
         elif file_type == "text":
             return f"""
             I will provide a text file along with a question related to its content. The text file may include written information, such as paragraphs, bullet points, or structured data, and it is intended for educational and study purposes.
-
                 Your task is to act as a knowledgeable and supportive teacher. When answering the question:
-
                 - Read and analyze the content of the text file thoroughly.
                 - Provide an answer that is:
                 - Accurate and relevant, addressing the question based solely on the text content.
                 - Clear and detailed, breaking down complex ideas for better understanding.
                 - Encouraging and insightful, offering logical reasoning and additional context to support the student’s learning.- 
                 - Your response should be within three lines in short and should convey the answer.
-
                 Additionally, consider the following conversation history between the User and the AI:
                 {prompt_history}
-
                 Now answer the following question considering the above context:
                 Question: {prompt}
             """
-        
-        return None

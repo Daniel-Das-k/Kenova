@@ -38,7 +38,7 @@ def process_file_request(file_path, prompt):
                 file_type = "video"
                 sanitized_url = re.sub(r'[^a-zA-Z0-9]', '_', file_path)
                 half_path = r"AI"
-                check_file_path = half_path + f"\\db\\downloaded_video_{sanitized_url}.mp4"
+                check_file_path = half_path + f"/db/downloaded_video_{sanitized_url}.mp4"
             else:
                 file_type = processor.file_handler.determine_file_type(file_path)
                 check_file_path = file_path
@@ -83,58 +83,30 @@ def process_file_request(file_path, prompt):
     except Exception as e:
         return {"error": str(e)}, 500
 
-# @app.route('/qa', methods=['POST'])
-# def qa():
-#     file = request.files.get('file')
-#     question = request.form.get('question')
 
-#     if not file or not question:
-#         return jsonify({"error": "File or question is missing"}), 400
-
-#     file_path = file.filename
-#     file.save(file_path)
-
-#     response, status_code = process_file_request(file_path, question)
-#     return jsonify(response), status_code
-
-@app.route('/note')
-def note():
-    return render_template('notes.html')
-
-@app.route('/flash')
-def flash():
-    return render_template('flashcard.html')
-
-@app.route('/sum')
-def summary():
-    return render_template('summary.html')
-
-@app.route('/key')
-def keypoints():
-    return render_template('keypoints.html')
-
-@app.route('/quiz')
-def quiz():
-    return render_template('quiz.html')
 
 @app.route('/process/<action>', methods=['POST'])
 def process_action(action):
     try:
         file = request.files.get('file')
         question = request.form.get('question')
+        url = request.form.get('url')
 
-        if not file:
+        if action not in ['qa', 'notes', 'flashcards', 'summary', 'keypoints', 'quiz']:
+            return jsonify({"error": "Invalid action"}), 400
+
+        if not file and not url:
             return jsonify({"error": "File is missing"}), 400
 
-        file_path = file.filename
-        file_path = "uploads/"+ file_path 
-        file.save(file_path)
+        if file:
+            file_path = file.filename
+            file_path = "uploads/"+ file_path 
+            file.save(file_path)
 
         prompts = {
             "qa": question,
             "notes": """
                          Analyze the provided document and generate detailed, well-organized smart notes. Ensure the notes are structured and informative, while capturing the essence of the document. The notes should include the following sections:
-
                          Overview:
                                  A high-level summary of the content, outlining the main topics and objectives. Provide a clear understanding of the purpose and scope of the material, offering context for the reader.
                          Key Concepts:
@@ -145,7 +117,6 @@ def process_action(action):
                                  Provide detailed notes on how the concepts and critical points can be applied in real-world contexts or exams. Offer practical examples, potential use cases, or scenarios where these ideas might be relevant or tested.
                          Additional Insights:
                                  Include any additional important information, such as potential pitfalls, common misconceptions, or advanced topics that provide a deeper understanding of the subject.
-
                          the notes should contain all the topics listed above without leaving any headings above 
                          Ensure the notes are clear, concise, and easy to scan. Prioritize critical information while making sure that every section is well-explained and free of redundancy.
                          Strictyly dont provide the introductory paragraph as heres a break down and similar to that be oin context start your response from the overview
@@ -153,9 +124,7 @@ def process_action(action):
 
             "flashcards":  """
                                 Analyze the entire content of the provided file and generate as many flashcards as possible, covering all key concepts, definitions, terms, important details, and examples. Be thorough in extracting and identifying all concepts from every section to ensure complete coverage of the material.
-
                                 Each flashcard must follow this schema:
-
                                 Key: The title or heading of the concept (e.g., a term, topic, question, or key idea).
                                 Value: A concise yet clear explanation, description, or answer to the concept, including relevant examples or context if needed.
                                 Ensure the flashcards capture every possible piece of information that could be useful for learning or revision. The output should be a dictionary where each key-value pair represents a flashcard. Structure the flashcards as:
@@ -172,10 +141,8 @@ def process_action(action):
 
             "summary": """
                             Analyze the entire content of the provided file and generate a summary that includes all headings and their corresponding content. Each heading should be followed by a detailed summary paragraph that captures the key points and essential ideas of that section. Additionally, for each section, provide a brief 150-word bullet-point summary to highlight the most important takeaways. Ensure the summary follows this structure:
-
                                 Headings:
                                     Include every heading or sub-heading from the document to ensure full coverage.
-
                                 For each heading, provide a summary paragraph (around 150 words) that concisely explains the content, focusing on the core ideas, concepts, and important details.
                                 Bullet-Point Summary:
                                     Under each heading, list key points as brief bullet points (about 3-5 points).
@@ -185,13 +152,11 @@ def process_action(action):
                                     Ensure smooth transitions between sections, making the summary suitable for quick revision and easy comprehension by students.
                                 Clarity and Simplicity:
                                     Complex ideas should be simplified for clarity without losing essential information.
-
                             Ensure the content is clear, concise, and free of redundancy.
                         """,
 
             "keypoints": """
                             Analyze the provided file and generate a comprehensive last-minute revision guide, ensuring the following structure:
-
                             Headings and Two-Liner Summaries(dont include this(wordings) in your response):
                                 For each heading or subheadingin the file provided, provide a two-line summary that captures the core essence of that section.
                                 The two-liner should succinctly explain the topic, including key concepts, critical points, and important details, ensuring that no significant information is left out.
@@ -223,13 +188,11 @@ def process_action(action):
                    "correct_answer": "The letter of the correct option (A, B, C, or D)"
                    "explanation": "An explanation of the correct answer and how it relates to the question"
                }
-
                Guidelines:
                - Generate questions that cover different aspects of the document
                - Ensure questions are challenging but fair
                - Provide plausible distractors for incorrect options
                - If no clear content is available, return a JSON array with an error message object
-
                Example output:
                [
                    {
@@ -250,7 +213,13 @@ def process_action(action):
             return jsonify({"error": f"Invalid action '{action}'"}), 400
 
         prompt = prompts[action]
-        response, status_code = process_file_request(file_path, prompt)
+        if file:
+            response, status_code = process_file_request(file_path, prompt)
+        elif url:
+
+            response, status_code = process_file_request(url, prompt)
+        else:
+            return jsonify({"error": "File or URL is missing"}), 400
         print(response)
         return jsonify(response), status_code
 
@@ -259,3 +228,4 @@ def process_action(action):
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5001)
+  
