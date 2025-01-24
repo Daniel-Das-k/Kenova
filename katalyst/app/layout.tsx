@@ -1,16 +1,9 @@
-import type { Metadata } from "next";
-import localFont from 'next/font/local';
-import "./globals.css";
-
-const courierPrime = localFont({
-  src: './fonts/CourierPrime-Regular.ttf',
-  variable: '--font-courier-prime',
-  display: 'swap',
-});
+import type { Metadata } from 'next';
+import './globals.css';
 
 export const metadata: Metadata = {
-  title: "EduSage",
-  description: "Your Digital Notebook",
+  title: 'Katalyst - Smart Learning Platform',
+  description: 'AI-powered learning platform for students',
 };
 
 export default function RootLayout({
@@ -20,7 +13,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={`${courierPrime.variable} antialiased`}>
+      <body className="antialiased">
         {children}
       </body>
     </html>

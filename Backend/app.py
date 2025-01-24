@@ -205,6 +205,32 @@ def process_action(action):
                          the notes should contain all the topics listed above without leaving any headings above 
                          Ensure the notes are clear, concise, and easy to scan. Prioritize critical information while making sure that every section is well-explained and free of redundancy.
                          Strictyly dont provide the introductory paragraph as heres a break down and similar to that be oin context start your response from the overview
+
+                         Example Output(Json Format):
+                         {
+                                        "Overview": "<overview of the document provided>",
+                                        "Key Concepts": [
+                                            "<key concept 1>",
+                                            "<key concept 2>",
+                                            "<key concept 3>"
+                                        ],
+                                        "Critical Points": [
+                                            "<critical point 1>",
+                                            "<critical point 2>",
+                                            "<critical point 3>"
+                                        ],
+                                        "Application": [
+                                            "<application 1>",
+                                            "<application 2>",
+                                            "<application 3>"
+                                        ],
+                                        "Additional Insights": [
+                                            "<insight 1>",
+                                            "<insight 2>",
+                                            "<insight 3>"
+                                        ]
+                            }
+
                     """,
 
             "flashcards":  """
@@ -242,22 +268,43 @@ def process_action(action):
 
             "keypoints": """
                             Analyze the provided file and generate a comprehensive last-minute revision guide, ensuring the following structure:
-                            Headings and Two-Liner Summaries(dont include this(wordings) in your response):
-                                For each heading or subheadingin the file provided, provide a two-line summary that captures the core essence of that section.
-                                The two-liner should succinctly explain the topic, including key concepts, critical points, and important details, ensuring that no significant information is left out.
-                            Example format:
-                                Machine Learning:
-                                Machine learning is a subset of artificial intelligence that enables a system to autonomously learn and improve using neural networks and deep learning, without being explicitly programmed, by feeding it large amounts of data.
-                            Formulas Section:
-                                If the content includes formulas, create a separate section titled 'Formulas'.
-                                List all formulas from the file in a bulleted format, providing the formula name or context (if available).
-                                Each formula should be accompanied by a brief description of its relevance or application in the material.
-                            Organization:
-                                The output should be well-organized and easy to scan. Ensure that each heading and subheading is followed by its two-liner summary.
-                                The content should be structured clearly, making it easy for students to revise and grasp key concepts quickly before exams.
-                            Clarity and Simplicity:
-                                Ensure the content is clear, concise, and free of redundancy.
-                            Ensure all topics are covered effectively, with no heading or formula overlooked.
+                            Extract the most important concepts. Present the information in the following JSON format:
+
+                            The key concept should be included under the "Concept" field.
+                            List the critical topics related to the concept under the "response" field as an array.
+                            Ensure the response is concise and formatted correctly as specified."
+                            Example output:
+                            {
+                                "Concept": "Neural Networks",
+                                "response": [
+                                    "Forward propagation",
+                                    "Backward propagation",
+                                    "Hidden layers",
+                                    "Input layer",
+                                    "Output layer"
+                            ],
+                            {
+                                "Concept": "Machine Learning",
+                                "response": [
+                                    "Supervised learning",
+                                    "Unsupervised learning",
+                                    "Reinforcement learning",
+                                    "Overfitting and underfitting",
+                                    "Feature scaling"
+                                ]
+                            },
+
+                            ....
+                            }
+
+
+                            Example format(Json):
+                           {
+                                "Concept": <concept name>,  
+                                "response":<responses>
+                               
+                            }
+
                         """    ,
             "quiz": """
                Analyze the provided file and generate at least 10 multiple-choice questions (MCQs) in strict JSON format. 

@@ -2,7 +2,7 @@ import React from 'react';
 
 export default function Home() {
   return (
-    <main className="min-h-screen p-16 md:p-24" style={{ fontFamily: 'var(--font-courier-prime)' }}>
+    <main className="min-h-screen bg-white p-16 md:p-24" style={{ fontFamily: 'var(--font-courier-prime)' }}>
       <h1 className="text-4xl font-bold mb-8">
         Welcome To <span className="text-[#FFB800]">Kenova</span>
       </h1>

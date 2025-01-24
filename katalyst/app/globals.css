@@ -3,18 +3,30 @@
 @tailwind utilities;
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --foreground-rgb: 0, 0, 0;
+  --background-start-rgb: 255, 255, 255;
+  --background-end-rgb: 255, 255, 255;
 }
 
 body {
-  color: var(--foreground);
-  background: var(--background);
+  color: rgb(var(--foreground-rgb));
+  background: rgb(var(--background-start-rgb));
+}
+
+/* Custom styles for the Smart Notes page */
+.nav-link {
+  @apply px-6 py-3 text-sm border-r border-black;
+}
+
+.nav-link-active {
+  @apply bg-[#4CAF50] text-white;
+}
+
+.nav-link-inactive {
+  @apply bg-white hover:bg-gray-50;
+}
+
+/* Smooth transitions */
+* {
+  @apply transition-colors duration-200;
 }
