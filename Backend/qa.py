@@ -151,6 +151,9 @@ class QuestionPaperGenerator:
                         {
                         "question_number": 1,
                         "question_text": "What is the general form of a quadratic polynomial in x with real coefficients?",
+                        "answer":"The general form of a quadratic polynomial in \( x \) with real coefficients is:  
+                        ax^2 + bx + c 
+                        where  a ,  b , and  c  are real numbers, and  a neq 0 . Here,  a  is the coefficient of  x^2 , \ b \ of \ x \, and \ c \ is the constant term."
                         "marks": 2
                         },
                         ...
@@ -163,6 +166,8 @@ class QuestionPaperGenerator:
                         {
                         "question_number": 1,
                         "question_text": "A student claims that the relationship between the zeroes and coefficients of a polynomial is only applicable to quadratic polynomials. Evaluate this claim, using examples from the text to support your reasoning.",
+                        "answer":"1. The General Case: Relationship Between Zeroes and Coefficients
+                            For any polynomial of degree .........",
                         "marks": 13
                         },
                         ...
@@ -218,6 +223,8 @@ class QuestionPaperGenerator:
             1. *Short-Answer Questions (2 Marks)* focusing on Remember and Understand.(10 Questions)
             2. *Long-Answer Questions (13 Marks)* focusing on Evaluate and Create.(5 Questions)
             3. *Case Study (15 Marks)* focusing on Apply and Create.(1 Question)
+            The generated answer must be the perfect answer in the context of the question.
+            
             Ensure the questions are categorized, formatted appropriately, and distributed according to Bloom's Taxonomy, with a logical structure.""",
             llm_config=self.llm_config
         )
@@ -227,11 +234,15 @@ class QuestionPaperGenerator:
             is_termination_msg=self.termination_msg,
             system_message="""Generate exactly 10 short-answer questions worth 2 marks each, focusing on Remember and Understand levels of Bloom's Taxonomy.
             Each question should be directly related to the content in the document.
+            The answer should be more than 35 words less than 50 words, the generated answer must be the perfect answwer in the context of the question.
+            The answer should be the only perfect answer that could be provided for that question.
             Format each question as:
             {
                 "question_number": <number>,
                 "question_text": "<question>",
+                "answer": "<answer>",
                 "marks": 2
+                .....
             }
             """,
             llm_config=self.llm_config,
@@ -242,11 +253,15 @@ class QuestionPaperGenerator:
             is_termination_msg=self.termination_msg,
             system_message="""Generate exactly 5 long-answer questions worth 13 marks each, focusing on Evaluate and Create levels of Bloom's Taxonomy.
             Each question should require detailed explanations, derivations, or critical analysis.
+            The answer should be more than 900 words, less than 1000 words, the generated answer must be the perfect answwer in the context of the question.
+            The answer shoould be the only perfect answer that could be provided.
             Format each question as:
             {
                 "question_number": <number>,
                 "question_text": "<question>",
+                "answer": "<answer>",
                 "marks": 13
+                ......
             }
             """,
             llm_config=self.llm_config,
@@ -256,6 +271,12 @@ class QuestionPaperGenerator:
             name="case_study",
             is_termination_msg=self.termination_msg,
             system_message="""Generate exactly 1 case study worth 15 marks that includes:
+            The answer should be long, depending on the marks each question is worth.
+            for Example:
+                marks alloted = 15
+                then, 1000 words answer should be generated
+                length of the answe should be depending on the marks awarded to each question
+                The answer shoould be the only perfect answer that could be provided.
             {
                 "section_title": "Case Study",
                 "total_marks": 15,
@@ -270,8 +291,10 @@ class QuestionPaperGenerator:
                     {
                         "question_number": 1,
                         "question_text": "<question>",
+                        "answer": <answer>
                         "marks": <marks>
                     }
+                    .....
                 ]
             }
             The case study should be practical and encourage critical thinking.""",
@@ -294,6 +317,7 @@ class QuestionPaperGenerator:
                             {
                                 "question_number": number,
                                 "question_text": string,
+                                "answer": string,
                                 "marks": number
                             }
                         ]
@@ -308,6 +332,7 @@ class QuestionPaperGenerator:
                             {
                                 "question_number": number,
                                 "question_text": string,
+                                "answer": string,
                                 "marks": number
                             }
                         ]
@@ -337,6 +362,7 @@ class QuestionPaperGenerator:
                         "section_title": "Long-Answer Questions",
                         "total_marks": 65,
                         "questions": [<questions from long_answer agent>]
+                    
                     },
                       {
                 "section_title": "Case Study",
@@ -354,6 +380,7 @@ class QuestionPaperGenerator:
                         "question_text": "<question>",
                         "marks": <marks>
                     }
+                    ......
                 ]
             }
                 ]
