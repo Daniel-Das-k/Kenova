@@ -17,6 +17,9 @@ const config: Config = {
         background: "var(--background)",
         foreground: "var(--foreground)",
       },
+      fontFamily: {
+        'courier-prime': ['var(--font-courier-prime)', 'monospace'],
+      },
     },
   },
   plugins: [

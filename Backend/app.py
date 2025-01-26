@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, render_template
+from flask import Flask, request, jsonify, render_template, send_from_directory
 from flask_cors import CORS
 from content_processor import ContentProcessor
 import os
@@ -6,13 +6,16 @@ import psycopg2
 import re
 from dotenv import load_dotenv
 import google.generativeai as genai
-import os
-
-from flask import Flask, request, jsonify, send_from_directory
-from flask_cors import CORS
+import openai
+from werkzeug.utils import secure_filename
+from PyPDF2 import PdfReader
 from qa import QuestionPaperGenerator
 from image_case import ImageCaseStudyGenerator
 from aws import upload_file_to_s3, insert_file_path_to_rds,retrieve_s3_file_content
+from langchain_google_genai import ChatGoogleGenerativeAI
+from langchain.prompts import PromptTemplate
+from langchain.chains.question_answering import load_qa_chain
+from langchain.docstore.document import Document
 
 load_dotenv()
 
@@ -20,6 +23,16 @@ app = Flask(__name__)
 CORS(app)
 DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://postgres:DanielDas2004@edusage-database.cp6gyg0soaec.ap-south-1.rds.amazonaws.com:5432/edusage-database")
 
+ALLOWED_EXTENSIONS = {'pdf'}
+UPLOAD_FOLDER = 'uploads'
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+
+# Create uploads directory if it doesn't exist
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+
+def allowed_file(filename):
+    return '.' in filename and \
+           filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 required_env_vars = ["MODEL", "GOOGLE_API_KEY", "EMBEDDING"]
 missing_vars = [var for var in required_env_vars if not os.getenv(var)]
@@ -60,6 +73,13 @@ def process_file_request(file_path, s3_file_path, prompt):
     try:
         if not file_path:
             return {"error": "file_path is required"}, 400
+
+        print(f"Processing file: {file_path}")
+        print(f"S3 File Path: {s3_file_path}")
+
+        # Validate AWS credentials
+        if not (os.getenv("AWS_ACCESS_KEY") and os.getenv("AWS_SECRET_KEY")):
+            return {"error": "AWS credentials are not configured"}, 500
 
         if file_path in cache:
             cached_data = cache[file_path]
@@ -120,7 +140,12 @@ def process_file_request(file_path, s3_file_path, prompt):
             return {"error": "Content generation failed"}, 500
 
     except Exception as e:
-        return {"error": str(e)}, 500
+        print(f"Unexpected error in process_file_request: {str(e)}")
+        # Log the full traceback for debugging
+        import traceback
+        traceback.print_exc()
+        return {"error": f"An unexpected error occurred: {str(e)}"}, 500
+
 
 @app.route('/images/<path:filename>',methods=['GET'])
 def serve_image(filename):
@@ -263,7 +288,7 @@ def process_action(action):
                                     Ensure smooth transitions between sections, making the summary suitable for quick revision and easy comprehension by students.
                                 Clarity and Simplicity:
                                     Complex ideas should be simplified for clarity without losing essential information.
-                            Ensure the content is clear, concise, and free of redundancy.
+                        Ensure the content is clear, concise, and free of redundancy.
                         """,
 
             "keypoints": """
@@ -357,7 +382,174 @@ def process_action(action):
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+@app.route('/process/quiz', methods=['POST'])
+def process_quiz():
+    if 'file' not in request.files:
+        return jsonify({'error': 'No file part'}), 400
+    
+    file = request.files['file']
+    if file.filename == '':
+        return jsonify({'error': 'No selected file'}), 400
+
+    if file and allowed_file(file.filename):
+        try:
+            # Save the file temporarily
+            filename = secure_filename(file.filename)
+            filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+            file.save(filepath)
+
+            # Upload to S3
+            s3_file_path = f"uploads/{filename}"
+            s3_url = upload_file_to_s3(filepath, "edusage-bucket", s3_file_path)
+            
+            if not s3_url:
+                return jsonify({'error': 'Failed to upload file to S3'}), 500
+
+            # Extract text and generate questions
+            pdf_text = extract_text_from_pdf(filepath)
+            questions = generate_mcq_questions(pdf_text)
+            
+            # Clean up the temporary file
+            os.remove(filepath)
+            
+            return jsonify({'response': questions})
+        except Exception as e:
+            print(f"Error processing file: {str(e)}")
+            return jsonify({'error': str(e)}), 500
+    
+    return jsonify({'error': 'Invalid file type'}), 400
+
+def generate_mcq_questions(text):
+    try:
+        api_key = os.getenv('GOOGLE_API_KEY')
+        if not api_key:
+            raise Exception("API key not found in environment variables")
+
+        genai.configure(api_key=api_key)
+        model = genai.GenerativeModel('gemini-pro')
+        
+        prompt = """Generate 10 multiple choice questions from the following text. 
+        For each question:
+        1. Include the question text
+        2. Provide 4 options labeled A, B, C, D
+        3. Specify the correct answer (A, B, C, or D)
+        4. Include a brief explanation of why the answer is correct
+        5. Assign marks (1-5 based on difficulty)
+        Guidelines:
+        - Generate questions that cover different aspects of the document
+        - Ensure questions are challenging but fair
+        - Provide plausible distractors for incorrect options
+        - If no clear content is available, return a JSON array with an error message object
+        Analyze the provided file and generate at least 10 multiple-choice questions (MCQs) in strict JSON format. 
+        Each question MUST follow this exact structure:
+
+        Format the output as a JSON array within markdown code blocks, like this:
+        ```json
+
+        {
+            "question": "A clear, concise question based on key concepts from the file",
+            "options": {
+                "A": "First option text",
+                "B": "Second option text", 
+                "C": "Third option text",
+                "D": "Fourth option text"
+            },
+            "correct_answer": "The letter of the correct option (A, B, C, or D)"
+            "explanation": "An explanation of the correct answer and how it relates to the question"
+            "marks":2
+        }
+        Example output:
+        [
+            {
+                "question": "What is the primary purpose of machine learning?",
+                "options": {
+                    "A": "To replace human programmers",
+                    "B": "To learn and improve from data",
+                    "C": "To create complex algorithms",
+                    "D": "To generate random predictions"
+                },
+                "correct_answer": "B"
+                "explanation": "Machine learning uses data to learn patterns and make predictions without being explicitly programmed."
+                "marks":2
+            }
+        ]
+        ```
+               """
+
+        response = model.generate_content(prompt)
+        print(response.text)
+        return response.text
+
+    except Exception as e:
+        print(f"Error generating questions: {str(e)}")
+        raise e
+
+def extract_text_from_pdf(file_path):
+    pdf_file = open(file_path, 'rb')
+    pdf_reader = PdfReader(pdf_file)
+    text = ''
+    for page in range(len(pdf_reader.pages)):
+        text += pdf_reader.pages[page].extract_text()
+    pdf_file.close()
+    return text
+
+def evaluate_answer(question, answer, context):
+    try:
+        context_document = Document(page_content=context)
+        
+        prompt_template = """
+        Evaluate the student's answer to the question based on the provided context.
+
+        If the answer is correct, award full marks and briefly explain why.
+        If the answer is partially correct, award partial marks, explain what's missing or incorrect, and offer suggestions for improvement.
+        If the answer is incorrect, give zero marks, provide the correct answer simply, and give constructive feedback.
+        IMPORTANT: Always provide the marks. Marks are mandatory and should not be omitted under any circumstances.
+
+        Be concise, friendly, and encouraging in your feedback.
+
+        Context: {context}
+        Question: {question}
+        Student's Answer: {answer}
+
+        Teacher's Feedback (including marks):
+        """
+        
+        model = ChatGoogleGenerativeAI(model="gemini-pro", temperature=0.3)
+        prompt = PromptTemplate(template=prompt_template, input_variables=["context", "question", "answer"])
+        chain = load_qa_chain(model, chain_type="stuff", prompt=prompt)
+
+        response = chain.invoke({
+            "input_documents": [context_document],
+            "question": question,
+            "answer": answer
+        }, return_only_outputs=True)
+
+        return response["output_text"]
+    except Exception as e:
+        print(f"Error in evaluate_answer: {str(e)}")
+        raise e
+
+@app.route('/submit_answer', methods=['POST'])
+def submit_answer():
+    try:
+        data = request.get_json()
+        if not data or 'question' not in data or 'answer' not in data or 'context' not in data:
+            return jsonify({
+                'status': 'error', 
+                'message': 'Missing required fields: question, answer, and context'
+            }), 400
+
+        response = evaluate_answer(data['question'], data['answer'], data['context'])
+        return jsonify({
+            'status': 'success',
+            'response': response
+        })
+    except Exception as e:
+        print(f"Error in submit_answer: {str(e)}")
+        return jsonify({
+            'status': 'error',
+            'message': str(e)
+        }), 500
+
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5002)
-
-

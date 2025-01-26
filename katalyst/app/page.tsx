@@ -1,16 +1,23 @@
+'use client';
+
 import React from 'react';
+import Link from 'next/link';
 
 export default function Home() {
   return (
-    <main className="min-h-screen bg-white p-16 md:p-24" style={{ fontFamily: 'var(--font-courier-prime)' }}>
+    <main className="min-h-screen bg-white p-16 md:p-24" >
       <h1 className="text-4xl font-bold mb-8">
-        Welcome To <span className="text-[#FFB800]">Kenova</span>
+        Welcome To <span className="text-[#FFB800]">EduSage</span>
       </h1>
       
       <div className="relative">
         <div className="flex items-center justify-between mb-6 border-b-2 border-black">
           <h2 className="text-xl font-medium">My Notebooks</h2>
-          <button className="text-3xl font-bold pb-1">+</button>
+          <Link href="/fileupload">
+            <span className="text-3xl font-bold pb-1 hover:text-[#FFB800] transition-colors cursor-pointer">
+              +
+            </span>
+          </Link>
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
