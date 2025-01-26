@@ -1,5 +1,4 @@
 'use client';
-
 import Sources from '../components/ai-assistant/Sources';
 import ChatSection from '../components/ai-assistant/ChatSection';
 import PageTemplate from '../components/PageTemplate';
@@ -9,7 +8,7 @@ export default function AIAssistantPage() {
   return (
     <PageTemplate>
       <AIAssistantProvider>
-        <div className="px-4 pt-6">
+        <div className="pt-20 px-4 md:px-8">
           <div className="flex gap-6">
             {/* Left Column - Sources */}
             <div className="w-72">

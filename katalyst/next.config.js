@@ -1,10 +1,16 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  swcMinify: true,
-  typescript: {
-    // Enable TypeScript features
-    ignoreBuildErrors: false,
+  webpack: (config) => {
+    config.resolve.alias.canvas = false;
+    config.resolve.alias.encoding = false;
+    return config;
+  },
+  images: {
+    domains: ['localhost'],
+  },
+  experimental: {
+    serverActions: true,
   },
 }
 

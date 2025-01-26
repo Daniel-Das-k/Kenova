@@ -6,27 +6,89 @@
   --foreground-rgb: 0, 0, 0;
   --background-start-rgb: 255, 255, 255;
   --background-end-rgb: 255, 255, 255;
+  --font-courier-prime: 'Courier Prime', monospace;
+}
+
+@layer base {
+  html {
+    font-family: var(--font-courier-prime);
+  }
 }
 
 body {
   color: rgb(var(--foreground-rgb));
   background: rgb(var(--background-start-rgb));
+  font-family: var(--font-courier-prime);
 }
 
-/* Custom styles for the Smart Notes page */
+/* Navigation Styles */
 .nav-link {
   @apply px-6 py-3 text-sm border-r border-black;
+  font-family: var(--font-courier-prime);
 }
 
 .nav-link-active {
-  @apply bg-[#4CAF50] text-white;
+  @apply bg-[#FFB800] text-black;
 }
 
 .nav-link-inactive {
   @apply bg-white hover:bg-gray-50;
 }
 
-/* Smooth transitions */
+/* PDF Viewer Styles */
+.pdf-viewer {
+  @apply w-full h-full border border-gray-200 rounded-lg shadow-lg;
+}
+
+/* Quiz and Exam Mode Styles */
+.question-card {
+  @apply bg-white p-6 rounded-lg shadow-md mb-4 border-2 border-black;
+}
+
+.answer-option {
+  @apply p-4 border-2 border-black rounded-md mb-2 cursor-pointer hover:bg-[#FFB800] transition-colors;
+}
+
+.answer-option-selected {
+  @apply bg-[#FFB800];
+}
+
+/* Smart Notes Styles */
+.notes-container {
+  @apply max-w-4xl mx-auto p-6;
+}
+
+.note-card {
+  @apply bg-white p-6 rounded-lg shadow-md mb-4 border-2 border-black;
+}
+
+/* AI Assistant Styles */
+.chat-container {
+  @apply flex flex-col h-[calc(100vh-4rem)] bg-gray-50;
+}
+
+.message {
+  @apply p-4 rounded-lg mb-4 max-w-[80%];
+}
+
+.user-message {
+  @apply bg-[#FFB800] self-end;
+}
+
+.ai-message {
+  @apply bg-white border-2 border-black self-start;
+}
+
+/* Global Transitions */
 * {
   @apply transition-colors duration-200;
+}
+
+/* Utility Classes */
+.btn-primary {
+  @apply px-6 py-2 bg-[#FFB800] text-black border-2 border-black rounded hover:bg-[#FFA500] transition-colors;
+}
+
+.btn-secondary {
+  @apply px-6 py-2 bg-white text-black border-2 border-black rounded hover:bg-gray-100 transition-colors;
 }
