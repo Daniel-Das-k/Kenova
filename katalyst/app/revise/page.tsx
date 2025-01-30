@@ -66,7 +66,7 @@ function ReviseContent() {
   };
 
   return (
-    <div className="pt-20 px-4 md:px-8">
+    <div className="pt-24 px-4 md:px-8">
       <div className="flex gap-6">
         {/* Left Section - Sources */}
         <div className="w-72">

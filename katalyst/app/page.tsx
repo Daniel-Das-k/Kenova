@@ -5,7 +5,7 @@ import Link from 'next/link';
 
 export default function Home() {
   return (
-    <main className="min-h-screen bg-white p-16 md:p-24" >
+    <main className="min-h-screen bg-white pt-24 px-8 md:px-16" >
       <h1 className="text-4xl font-bold mb-8">
         Welcome To <span className="text-[#FFB800]">EduSage</span>
       </h1>

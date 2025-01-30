@@ -92,3 +92,17 @@ body {
 .btn-secondary {
   @apply px-6 py-2 bg-white text-black border-2 border-black rounded hover:bg-gray-100 transition-colors;
 }
+
+/* Content Layout */
+.content {
+  @apply flex flex-col min-h-screen;
+}
+
+.main-content {
+  @apply flex-1 flex gap-10 px-8 pt-24 pb-8;
+}
+
+.sources-section,
+.other-section {
+  @apply bg-white rounded-lg shadow-md p-6 flex-1;
+}

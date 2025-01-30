@@ -24,8 +24,9 @@ class Uploader:
             aws_secret_access_key=os.getenv("AWS_SECRET_KEY"),
             region_name=os.getenv("AWS_REGION")
         )
-
+   
         response = s3.get_object(Bucket="edusage-bucket", Key=s3_file_path)
+        
         return io.BytesIO(response['Body'].read())
     
     def get_mime_type(self,file_name):

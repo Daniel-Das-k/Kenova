@@ -1,7 +1,7 @@
 'use client';
-import React, { useState, useRef } from 'react';
-import Navbar from '../components/Navbar';
-import { Plus } from 'lucide-react';
+import React, { useState } from 'react';
+import PageTemplate from '../components/PageTemplate';
+import FileUploadGreen from '../components/smart-notes/FileUploadGreen';
 
 interface Question {
   question: string;
@@ -25,16 +25,28 @@ const QuizPage = () => {
   const [selectedAnswer, setSelectedAnswer] = useState<string>('');
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState<number>(0);
   const [feedback, setFeedback] = useState<string>('');
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [sources, setSources] = useState<{ id: string; file: File }[]>([]);
 
-  const handleAddSource = () => {
-    fileInputRef.current?.click();
+  const handleFilesSelected = async (files: File[]) => {
+    if (sources.length > 0) {
+      return; // Don't add more files if we already have one
+    }
+    
+    const file = files[0]; // Only take the first file
+    if (!file) return;
+
+    const source = {
+      id: Math.random().toString(36).substr(2, 9),
+      file: file
+    };
+    setSources([source]);
+    setFile(file);
   };
 
-  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-    setFile(file);
+  const handleRemoveSource = (id: string) => {
+    setSources([]);
+    setFile(null);
+    setQuestions([]);
   };
 
   const handleGenerate = async () => {
@@ -72,7 +84,6 @@ const QuizPage = () => {
         throw new Error('Failed to parse the server response.');
       }
 
-      // Validate the parsed data structure
       if (Array.isArray(parsedData) && 
           parsedData.length > 0 && 
           parsedData.every((q: any) => 
@@ -81,195 +92,120 @@ const QuizPage = () => {
             'options' in q &&
             typeof q.options === 'object'
           )) {
-        console.log('Valid quiz format:', parsedData);
         setQuestions(parsedData);
       } else {
-        console.error('Invalid quiz format:', {
-          isArray: Array.isArray(parsedData),
-          hasItems: parsedData?.length > 0,
-          itemsValid: parsedData?.every((q: any) => 
-            typeof q === 'object' &&
-            'question' in q &&
-            'options' in q &&
-            typeof q.options === 'object'
-          )
-        });
         throw new Error('Invalid quiz format');
       }
     } catch (error) {
       console.error('Error:', error);
-      alert('Failed to generate questions. Please try again.');
+      alert('Failed to generate quiz. Please try again.');
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleAnswerSubmit = async () => {
-    if (!selectedAnswer) {
-      alert('Please select an answer before submitting');
-      return;
-    }
-
-    try {
-      const response = await fetch('http://127.0.0.1:5002/submit_answer', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          question: questions[currentQuestionIndex].question,
-          answer: selectedAnswer,
-          context: file ? await file.text() : ''
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to submit answer');
-      }
-
-      const data = await response.json();
-      if (data.status === 'success') {
-        setFeedback(data.response);
-        setAnswers(prev => [...prev, {
-          questionId: currentQuestionIndex,
-          answer: selectedAnswer,
-          feedback: data.response
-        }]);
-      } else {
-        throw new Error(data.message || 'Failed to evaluate answer');
-      }
-    } catch (error) {
-      console.error('Error:', error);
-      alert('Failed to submit answer. Please try again.');
-    }
+  const handleAnswerSelect = (answer: string) => {
+    setSelectedAnswer(answer);
+    setAnswers(prev => [
+      ...prev.filter(a => a.questionId !== currentQuestionIndex),
+      { questionId: currentQuestionIndex, answer }
+    ]);
   };
 
-  const handleOptionSelect = (option: string) => {
-    setSelectedAnswer(option);
-  };
-
-  const handleNextQuestion = () => {
-    if (currentQuestionIndex < questions.length - 1) {
-      setCurrentQuestionIndex(prev => prev + 1);
-      setSelectedAnswer('');
-      setFeedback('');
-    }
-  };
-
-  const handlePreviousQuestion = () => {
-    if (currentQuestionIndex > 0) {
-      setCurrentQuestionIndex(prev => prev - 1);
-      setSelectedAnswer('');
-      setFeedback('');
-    }
-  };
+  const currentQuestion = questions[currentQuestionIndex];
 
   return (
-    <div className="min-h-screen bg-white">
-      <Navbar />
-      <main className="pt-20 px-4 md:px-8" style={{ fontFamily: 'var(--font-courier-prime)' }}>
-        <div className="max-w-[1500px] mx-auto">
-          <div className="grid grid-cols-[300px_1fr] gap-4">
-            {/* Left Sidebar */}
-            <div className="border-2 border-black bg-white p-4">
-              <h2 className="text-xl font-bold mb-4">Sources</h2>
-              <input
-                type="file"
-                accept=".pdf"
-                className="hidden"
-                ref={fileInputRef}
-                onChange={handleFileUpload}
-              />
-              
-              <button 
-                  onClick={handleAddSource}
-                  className="mt-4 w-full flex items-center justify-center gap-2 py-2 px-4 bg-white border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-all font-medium"
-                >
-                <Plus size={18} />
-                  Add Source
-              </button>
-              {file && (
-                <>
-                  <div className="mt-4 p-3 border-2 border-black">
-                    <p className="text-sm truncate">{file.name}</p>
-                  </div>
+    <PageTemplate>
+      <div className="pt-24 px-4 md:px-8">
+        <div className="flex gap-6">
+          {/* Left Section - Sources */}
+          <div className="w-72">
+            <div className="border-2 border-black h-[calc(90vh-80px)]">
+              <div className="p-4">
+                <h2 className="text-lg font-bold mb-4">Sources</h2>
+                <FileUploadGreen
+                  onFilesSelected={handleFilesSelected}
+                  onFileRemove={handleRemoveSource}
+                  files={sources.map(source => ({
+                    id: source.id,
+                    name: source.file.name,
+                    size: source.file.size,
+                    type: source.file.type,
+                    file: source.file
+                  }))}
+                  buttonText={sources.length === 0 ? "Add source" : "Source added"}
+                  acceptedFileTypes={['.pdf']}
+                  disabled={sources.length > 0}
+                />
+                {file && (
                   <button
                     onClick={handleGenerate}
+                    className="mt-4 w-full bg-green-500 text-white py-2 px-4 rounded hover:bg-green-600 disabled:bg-gray-300"
                     disabled={isLoading}
-                    className="w-full mt-4 py-2.5 px-4 bg-white border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-all font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    {isLoading ? 'Generating...' : 'Generate Quiz'}
+                    {isLoading ? 'Generating...' : 'Generate'}
                   </button>
-                </>
-              )}
+                )}
+              </div>
             </div>
+          </div>
 
-            {/* Main Content */}
-            <div className="border-2 border-black bg-white p-4 min-h-[600px] flex items-center justify-center">
-              {isLoading ? (
-                <p className="text-lg">Generating questions...</p>
-              ) : !file ? (
-                <p className="text-lg">Please upload a PDF file first</p>
-              ) : questions.length > 0 ? (
-                <div className="w-full space-y-6">
-                  <div className="flex justify-between items-center mb-4">
-                    <button 
-                      onClick={handlePreviousQuestion}
-                      disabled={currentQuestionIndex === 0}
-                      className="px-4 py-2 border-2 border-black disabled:opacity-50"
-                    >
-                      Previous
-                    </button>
-                    <span>Question {currentQuestionIndex + 1} of {questions.length}</span>
-                    <button 
-                      onClick={handleNextQuestion}
-                      disabled={currentQuestionIndex === questions.length - 1}
-                      className="px-4 py-2 border-2 border-black disabled:opacity-50"
-                    >
-                      Next
-                    </button>
-                  </div>
-
-                  <div className="p-4 border-2 border-black">
-                    <p className="font-medium mb-3">{questions[currentQuestionIndex].question}</p>
-                    <div className="grid grid-cols-2 gap-3">
-                      {Object.entries(questions[currentQuestionIndex].options).map(([key, value]) => (
-                        <button
-                          key={key}
-                          onClick={() => handleOptionSelect(key)}
-                          className={`p-2 border-2 border-black transition-all ${
-                            selectedAnswer === key ? 'bg-black text-white' : 'hover:bg-gray-100'
-                          }`}
-                        >
-                          {key}: {value}
-                        </button>
-                      ))}
+          {/* Right Section - Quiz */}
+          <div className="flex-1">
+            <div className="border-2 border-black h-[calc(90vh-80px)] bg-white">
+              <div className="p-6 h-full flex flex-col">
+                <h2 className="text-lg font-bold mb-4">Quiz</h2>
+                <div className="flex-1 overflow-y-auto">
+                  {isLoading ? (
+                    <div className="flex items-center justify-center h-full">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-500"></div>
                     </div>
-                  </div>
-
-                  <div className="flex flex-col gap-4">
-                    <button
-                      onClick={handleAnswerSubmit}
-                      disabled={!selectedAnswer}
-                      className="w-full py-2 px-4 bg-white border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-all font-medium disabled:opacity-50"
-                    >
-                      Submit Answer
-                    </button>
-
-                    {feedback && (
-                      <div className="p-4 border-2 border-black bg-gray-50">
-                        <h3 className="font-bold mb-2">Feedback:</h3>
-                        <p className="whitespace-pre-wrap">{feedback}</p>
+                  ) : questions.length > 0 ? (
+                    <div className="space-y-6">
+                      <div className="font-medium">
+                        Question {currentQuestionIndex + 1} of {questions.length}
                       </div>
-                    )}
-                  </div>
+                      <div className="text-lg">{currentQuestion.question}</div>
+                      <div className="space-y-3">
+                        {Object.entries(currentQuestion.options).map(([key, value]) => (
+                          <button
+                            key={key}
+                            onClick={() => handleAnswerSelect(key)}
+                            className={`w-full text-left p-3 rounded border ${selectedAnswer === key ? 'border-green-500 bg-green-50' : 'border-gray-300 hover:border-gray-400'}`}
+                          >
+                            {value}
+                          </button>
+                        ))}
+                      </div>
+                      <div className="flex justify-between pt-4">
+                        <button
+                          onClick={() => setCurrentQuestionIndex(prev => Math.max(0, prev - 1))}
+                          disabled={currentQuestionIndex === 0}
+                          className="px-4 py-2 rounded bg-gray-100 hover:bg-gray-200 disabled:opacity-50"
+                        >
+                          Previous
+                        </button>
+                        <button
+                          onClick={() => setCurrentQuestionIndex(prev => Math.min(questions.length - 1, prev + 1))}
+                          disabled={currentQuestionIndex === questions.length - 1}
+                          className="px-4 py-2 rounded bg-green-500 text-white hover:bg-green-600 disabled:opacity-50"
+                        >
+                          Next
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex items-center justify-center h-full text-gray-500">
+                      Upload a PDF file to generate quiz questions
+                    </div>
+                  )}
                 </div>
-              ) : null}
+              </div>
             </div>
           </div>
         </div>
-      </main>
-    </div>
+      </div>
+    </PageTemplate>
   );
 };
 

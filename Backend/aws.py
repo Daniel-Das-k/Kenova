@@ -131,7 +131,7 @@ s3 = boto3.client(
 
 def upload_file_to_s3(file_path, bucket_name, object_name):
     try:
-        print(file_path,bucket_name,object_name)
+        # print(file_path,bucket_name,object_name)
         s3.upload_file(file_path, AWS_BUCKET_NAME, object_name)
         print("IIIIII")
         s3_url = f"https://{file_path}.s3.{AWS_REGION}.amazonaws.com/{object_name}"

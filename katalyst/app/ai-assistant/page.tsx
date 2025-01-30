@@ -8,7 +8,7 @@ export default function AIAssistantPage() {
   return (
     <PageTemplate>
       <AIAssistantProvider>
-        <div className="pt-20 px-4 md:px-8">
+        <div className="pt-24 px-4 md:px-8">
           <div className="flex gap-6">
             {/* Left Column - Sources */}
             <div className="w-72">

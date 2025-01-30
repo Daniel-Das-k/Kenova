@@ -112,7 +112,7 @@ export default function FileUpload() {
     <div className="min-h-screen bg-white">
       <Navbar isBlurred={!showPreview} />
       {!showPreview ? (
-        <div className="h-[calc(100vh-5rem)] flex items-center justify-center px-4 md:px-8 pt-20">
+        <div className="h-[calc(100vh-5rem)] flex items-center justify-center px-4 md:px-8 pt-24">
           <div className="w-full max-w-2xl">
             <div className="border-2 border-black p-6 rounded-lg text-center">
               <h1 className="text-3xl font-bold mb-8 tracking-wider">FILE UPLOAD</h1>
@@ -180,7 +180,7 @@ export default function FileUpload() {
           </div>
         </div>
       ) : (
-        <main className="pt-20 px-4 md:px-8">
+        <main className="pt-24 px-4 md:px-8">
           <div className="max-w-[1400px] mx-auto">
             <div className="border-2 border-black p-6 rounded-lg">
               {file && <PDFViewer pdfUrl={URL.createObjectURL(file)} />}

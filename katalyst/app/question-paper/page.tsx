@@ -4,7 +4,7 @@ import React from 'react';
 import Navbar from '../components/Navbar';
 import { usePdfStore } from '../store/pdfStore';
 import PDFViewer from '../components/PDFViewer';
-import { Plus, X, Loader2 } from "lucide-react";
+import { FileText, X, Loader2 } from "lucide-react";
 import { useRef } from "react";
 import { useRouter } from "next/navigation";
 
@@ -119,57 +119,61 @@ export default function QuestionPaper() {
   return (
     <div className="min-h-screen bg-white">
       <Navbar/>
-      <main className="pt-20 px-4 md:px-8" style={{ fontFamily: 'var(--font-courier-prime)' }}>
-        <div className="max-w-[1400px] mx-auto">
-          <div className={generatedPdf ? "" : "grid grid-cols-[300px_1fr] gap-4"}>
-            {/* Sources Section - Hide when showing generated paper */}
-            {!generatedPdf && (
-              <div className="border-2 border-black bg-white p-4">
-                <h2 className="text-xl font-bold mb-4">Sources</h2>
-                <div className="space-y-3">
-                  {pdfSources.map((source, index) => (
-                    <div 
-                      key={index} 
-                      className="flex items-center justify-between p-3 border-2 border-black cursor-pointer hover:bg-gray-50"
-                      onClick={() => setPdfUrl(source)}
-                    >
-                      <span>PDF Source {index + 1}</span>
-                      <button 
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          removePdfSource(source);
-                          if (pdfUrl === source) {
-                            setPdfUrl(pdfSources[0] || null);
-                          }
-                        }}
-                        className="hover:text-red-500"
+      <main className="pt-24 px-4 md:px-8">
+        <div className="flex gap-6">
+          {/* Left Section - Sources */}
+          {!generatedPdf && (
+            <div className="w-72">
+              <div className="border-2 border-black h-[calc(90vh-80px)]">
+                <div className="p-4">
+                  <h2 className="text-lg font-bold mb-4">Sources</h2>
+                  <div className="space-y-3">
+                    {pdfSources.map((source, index) => (
+                      <div 
+                        key={index} 
+                        className="flex items-center justify-between p-3 border-2 border-black cursor-pointer hover:bg-gray-50"
+                        onClick={() => setPdfUrl(source)}
                       >
-                        <X size={18} />
-                      </button>
-                    </div>
-                  ))}
+                        <span>PDF Source {index + 1}</span>
+                        <button 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            removePdfSource(source);
+                            if (pdfUrl === source) {
+                              setPdfUrl(pdfSources[0] || null);
+                            }
+                          }}
+                          className="hover:text-red-500"
+                        >
+                          <X size={18} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                  <input
+                    type="file"
+                    accept="application/pdf"
+                    onChange={handleFileSelect}
+                    ref={fileInputRef}
+                    className="hidden"
+                  />
+                  <button 
+                    onClick={() => fileInputRef.current?.click()}
+                    className="mt-4 w-full flex items-center justify-center gap-2 py-2 px-4 bg-white border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-all font-medium"
+                  >
+                    <FileText className="w-5 h-5" />
+                    Add Source
+                  </button>
                 </div>
-                <input
-                  type="file"
-                  accept="application/pdf"
-                  onChange={handleFileSelect}
-                  ref={fileInputRef}
-                  className="hidden"
-                />
-                <button 
-                  onClick={() => fileInputRef.current?.click()}
-                  className="mt-4 w-full flex items-center justify-center gap-2 py-2 px-4 bg-white border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-all font-medium"
-                >
-                  <Plus size={18} />
-                  Add Source
-                </button>
               </div>
-            )}
+            </div>
+          )}
 
-            {/* Main Content Section */}
-            <div className="border-2 border-black bg-white">
+          {/* Right Section - Content */}
+          <div className="flex-1">
+            <div className="border-2 border-black h-[calc(90vh-80px)] bg-white">
               {generatedPdf ? (
-                <div className="flex-1 bg-white p-6 overflow-auto">
+                <div className="p-6 h-full overflow-auto">
                   <div className="prose max-w-none">
                     <h1 className="text-2xl font-bold text-center mb-6">{generatedPdf.title}</h1>
                     <div className="mb-8">

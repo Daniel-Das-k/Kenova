@@ -160,3 +160,5 @@ cython_debug/
 #.idea/
 
 client/node_modules
+Backend/db/
+katalyst/node_modules/
