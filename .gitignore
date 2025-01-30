@@ -120,7 +120,7 @@ celerybeat.pid
 *.sage.py
 
 # Environments
-
+.env
 .venv
 env/
 venv/
@@ -160,5 +160,4 @@ cython_debug/
 #.idea/
 
 client/node_modules
-Backend/db/
 katalyst/node_modules/
